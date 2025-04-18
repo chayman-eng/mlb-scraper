@@ -7,12 +7,13 @@ import os
 # Yesterday’s games
 target_date = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
 
-# DB credentials (from environment variables)
-DB_NAME = os.getenv("PGDATABASE", "mlb")
-DB_USER = os.getenv("PGUSER", "postgres")
-DB_PASS = os.getenv("PGPASSWORD", "1234")
-DB_HOST = os.getenv("PGHOST", "localhost")
-DB_PORT = os.getenv("PGPORT", "5432")
+import os
+
+DB_NAME = os.environ["PGDATABASE"]
+DB_USER = os.environ["PGUSER"]
+DB_PASS = os.environ["PGPASSWORD"]
+DB_HOST = os.environ["PGHOST"]
+DB_PORT = os.environ["PGPORT"]
 
 # Connect to DB
 conn = psycopg2.connect(
