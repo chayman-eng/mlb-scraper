@@ -14,6 +14,24 @@ db_url = os.environ["DATABASE_URL"]
 db_info = up.urlparse(db_url)
 
 # --------- Connect to PostgreSQL ---------
+import time
+for attempt in range(5):
+    try:
+        conn = psycopg2.connect(
+            dbname=db_info.path[1:],
+            user=db_info.username,
+            password=db_info.password,
+            host=db_info.hostname,
+            port=db_info.port
+        )
+        break
+    except psycopg2.OperationalError as e:
+        print(f"Retrying DB connection... attempt {attempt + 1}/5")
+        time.sleep(5)
+else:
+    raise Exception("🚫 Failed to connect to DB after 5 attempts.")
+
+
 conn = psycopg2.connect(
     dbname=db_info.path[1:],
     user=db_info.username,
