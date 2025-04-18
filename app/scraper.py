@@ -5,12 +5,12 @@ import json
 import os
 import urllib.parse as up
 
-# --------- Parse Railway DATABASE_URL ---------
+# Parse Railway DATABASE_URL
 up.uses_netloc.append("postgres")
 db_url = os.environ["DATABASE_URL"]
 db_info = up.urlparse(db_url)
 
-# --------- Connect to PostgreSQL ---------
+# Connect to Postgres
 conn = psycopg2.connect(
     dbname=db_info.path[1:],
     user=db_info.username,
@@ -20,7 +20,7 @@ conn = psycopg2.connect(
 )
 cur = conn.cursor()
 
-# --------- Create Table if Not Exists ---------
+# Ensure table exists
 cur.execute("""
     CREATE TABLE IF NOT EXISTS mlb_boxscores (
         id SERIAL PRIMARY KEY,
@@ -31,16 +31,15 @@ cur.execute("""
 """)
 conn.commit()
 
-# --------- Get Yesterday's Date ---------
-target_date = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+# Get last 7 days
+end_date = datetime.date.today()
+start_date = end_date - datetime.timedelta(days=7)
+games = statsapi.schedule(start_date=start_date.strftime('%Y-%m-%d'), end_date=end_date.strftime('%Y-%m-%d'))
 
-# --------- Fetch and Save Game Data ---------
-games = statsapi.schedule(start_date=target_date, end_date=target_date)
-
+# Fetch and insert each game's box score
 for game in games:
     game_id = game['game_id']
     game_date = game['game_date']
-
     try:
         box = statsapi.boxscore_data(game_id)
         cur.execute("""
@@ -48,9 +47,9 @@ for game in games:
             VALUES (%s, %s, %s)
             ON CONFLICT (game_id) DO NOTHING
         """, (game_id, game_date, json.dumps(box)))
-        print(f"✅ Saved: {game_id}")
+        print(f"✅ Saved: {game_id} ({game['away_name']} at {game['home_name']})")
     except Exception as e:
-        print(f"❌ Error saving game {game_id}: {e}")
+        print(f"❌ Error for game {game_id}: {e}")
 
 conn.commit()
 cur.close()
