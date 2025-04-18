@@ -7,7 +7,7 @@ import urllib.parse as up
 
 # --------- Parse Railway DATABASE_URL ---------
 up.uses_netloc.append("postgres")
-db_url = os.environ["postgresql://postgres:DvzwPPKFUNKULroXcMAHermvOKxMaGRz@hopper.proxy.rlwy.net:41084/railway"]
+db_url = os.environ["DATABASE_URL"]
 db_info = up.urlparse(db_url)
 
 # --------- Connect to PostgreSQL ---------
