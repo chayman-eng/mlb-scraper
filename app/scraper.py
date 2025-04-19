@@ -20,7 +20,7 @@ conn = psycopg2.connect(
 )
 cur = conn.cursor()
 
-# --------- Ensure Table Exists ---------
+# --------- Create Table if Not Exists ---------
 cur.execute("""
     CREATE TABLE IF NOT EXISTS mlb_boxscores (
         id SERIAL PRIMARY KEY,
@@ -31,24 +31,26 @@ cur.execute("""
 """)
 conn.commit()
 
-# --------- Get Yesterday's Date ---------
-target_date = (datetime.date.today() - datetime.timedelta(days=2)).strftime('%Y-%m-%d')
-games = statsapi.schedule(start_date=target_date, end_date=target_date)
+# --------- Backfill the last 7 days ---------
+for i in range(1, 8):  # 1 = yesterday, 7 = last week
+    target_date = (datetime.date.today() - datetime.timedelta(days=i)).strftime('%Y-%m-%d')
+    print(f"📅 Fetching games for {target_date}")
+    games = statsapi.schedule(start_date=target_date, end_date=target_date)
 
-# --------- Fetch and Insert Games ---------
-for game in games:
-    game_id = game['game_id']
-    game_date = game['game_date']
-    try:
-        box = statsapi.boxscore_data(game_id)
-        cur.execute("""
-            INSERT INTO mlb_boxscores (game_id, game_date, json_data)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (game_id) DO NOTHING
-        """, (game_id, game_date, json.dumps(box)))
-        print(f"✅ Saved: {game_id} ({game['away_name']} at {game['home_name']})")
-    except Exception as e:
-        print(f"❌ Error saving {game_id}: {e}")
+    for game in games:
+        game_id = game['game_id']
+        game_date = game['game_date']
+
+        try:
+            box = statsapi.boxscore_data(game_id)
+            cur.execute("""
+                INSERT INTO mlb_boxscores (game_id, game_date, json_data)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (game_id) DO NOTHING
+            """, (game_id, game_date, json.dumps(box)))
+            print(f"✅ Saved game_id: {game_id}")
+        except Exception as e:
+            print(f"❌ Failed to save {game_id}: {e}")
 
 conn.commit()
 cur.close()
