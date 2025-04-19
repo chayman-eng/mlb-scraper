@@ -3,14 +3,14 @@ import psycopg2
 import datetime
 import json
 import os
+import os
+import psycopg2
 import urllib.parse as up
 
-# --------- Parse Railway DATABASE_URL ---------
 up.uses_netloc.append("postgres")
 db_url = os.environ["DATABASE_URL"]
 db_info = up.urlparse(db_url)
 
-# --------- Connect to PostgreSQL ---------
 conn = psycopg2.connect(
     dbname=db_info.path[1:],
     user=db_info.username,
@@ -18,6 +18,7 @@ conn = psycopg2.connect(
     host=db_info.hostname,
     port=db_info.port
 )
+
 cur = conn.cursor()
 
 # --------- Create Table if Not Exists ---------
