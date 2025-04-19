@@ -32,7 +32,7 @@ cur.execute("""
 conn.commit()
 
 # --------- Get Yesterday's Date ---------
-target_date = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+target_date = (datetime.date.today() - datetime.timedelta(days=2)).strftime('%Y-%m-%d')
 games = statsapi.schedule(start_date=target_date, end_date=target_date)
 
 # --------- Fetch and Insert Games ---------
