@@ -4,21 +4,30 @@ import datetime
 import json
 import os
 import urllib.parse as up
+import sys
 
 # --------- Parse DATABASE_URL from Environment ---------
-up.uses_netloc.append("postgres")
-db_url = os.environ["DATABASE_URL"]
-db_info = up.urlparse(db_url)
+try:
+    up.uses_netloc.append("postgres")
+    db_url = os.environ["DATABASE_URL"]
+    db_info = up.urlparse(db_url)
+except Exception as e:
+    print(f"❌ DATABASE_URL not set or invalid: {e}")
+    sys.exit(1)
 
 # --------- Connect to PostgreSQL ---------
-conn = psycopg2.connect(
-    dbname=db_info.path[1:],
-    user=db_info.username,
-    password=db_info.password,
-    host=db_info.hostname,
-    port=db_info.port
-)
-cur = conn.cursor()
+try:
+    conn = psycopg2.connect(
+        dbname=db_info.path[1:],
+        user=db_info.username,
+        password=db_info.password,
+        host=db_info.hostname,
+        port=db_info.port
+    )
+    cur = conn.cursor()
+except Exception as e:
+    print(f"❌ Failed to connect to database: {e}")
+    sys.exit(1)
 
 # --------- Create Table if Not Exists ---------
 cur.execute("""
@@ -54,3 +63,7 @@ for game in games:
 conn.commit()
 cur.close()
 conn.close()
+
+# --------- Clean Exit ---------
+print("🎯 Scraper finished successfully.")
+sys.exit(0)
